@@ -17,7 +17,7 @@ import boto3
 
 NAMESPACE = os.getenv("WATCH_NAMESPACE", "prod")
 BEDROCK_REGION = os.getenv("BEDROCK_REGION", "us-east-1")
-BEDROCK_MODEL = os.getenv("BEDROCK_MODEL", "anthropic.claude-sonnet-4-6")
+BEDROCK_MODEL = os.getenv("BEDROCK_MODEL", "anthropic.claude-3-haiku-20240307-v1:0")
 CHECK_INTERVAL = int(os.getenv("CHECK_INTERVAL_SECONDS", "30"))
 
 # ─── Logging ─────────────────────────────────────────────────────────────────
