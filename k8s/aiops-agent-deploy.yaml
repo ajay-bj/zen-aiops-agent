@@ -31,7 +31,7 @@ spec:
             - name: BEDROCK_REGION
               value: "us-east-1"
             - name: BEDROCK_MODEL
-              value: "us.anthropic.claude-sonnet-4-6"
+              value: "amazon.nova-pro-v1:0"
             - name: CHECK_INTERVAL_SECONDS
               value: "30"
             - name: AUTO_HEAL

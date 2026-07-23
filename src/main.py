@@ -17,7 +17,7 @@ import boto3
 
 NAMESPACE = os.getenv("WATCH_NAMESPACE", "prod")
 BEDROCK_REGION = os.getenv("BEDROCK_REGION", "us-east-1")
-BEDROCK_MODEL = os.getenv("BEDROCK_MODEL", "us.anthropic.claude-sonnet-4-6")
+BEDROCK_MODEL = os.getenv("BEDROCK_MODEL", "amazon.nova-pro-v1:0")
 CHECK_INTERVAL = int(os.getenv("CHECK_INTERVAL_SECONDS", "30"))
 
 # ─── Logging ─────────────────────────────────────────────────────────────────
@@ -167,15 +167,13 @@ You MUST choose ONE action to fix this. Available actions:
 Respond ONLY in this exact JSON format:
 {{"action": "ROLLBACK or RESTART or SCALE", "root_cause": "one sentence explanation", "fix_details": "what exactly you are doing to fix it", "rollback_image": "image:tag (only if action is ROLLBACK, use one from PREVIOUS KNOWN-GOOD IMAGES)"}}"""
 
-    body = json.dumps({
-        "anthropic_version": "bedrock-2023-05-31",
-        "max_tokens": 400,
-        "messages": [{"role": "user", "content": prompt}],
-    })
-
-    response = bedrock.invoke_model(modelId=BEDROCK_MODEL, body=body)
-    result = json.loads(response["body"].read())
-    text = result["content"][0]["text"]
+    # Use converse API — works with all Bedrock models (Nova, Claude, etc.)
+    response = bedrock.converse(
+        modelId=BEDROCK_MODEL,
+        messages=[{"role": "user", "content": [{"text": prompt}]}],
+        inferenceConfig={"maxTokens": 400}
+    )
+    text = response["output"]["message"]["content"][0]["text"]
 
     try:
         return json.loads(text)
