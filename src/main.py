@@ -204,11 +204,16 @@ def execute_fix(analysis, pod_name, deploy_name, namespace):
         rollback_image = analysis.get("rollback_image", "")
         if rollback_image:
             log.info(f"  🔧 ROLLING BACK: Setting image to {rollback_image}")
+            try:
+                deploy = apps_v1.read_namespaced_deployment(name=deploy_name, namespace=namespace)
+                container_name = deploy.spec.template.spec.containers[0].name
+            except Exception:
+                container_name = "nginx"
             body = {
                 "spec": {
                     "template": {
                         "spec": {
-                            "containers": [{"name": deploy_name.split("-")[0] if "-" in deploy_name else "nginx", "image": rollback_image}]
+                            "containers": [{"name": container_name, "image": rollback_image}]
                         }
                     }
                 }
@@ -232,16 +237,25 @@ def execute_fix(analysis, pod_name, deploy_name, namespace):
 
     elif action == "SCALE":
         log.info(f"  🔧 SCALING: Cycling deployment {deploy_name}")
+        
+        # Read current replicas to restore them later
+        try:
+            deploy = apps_v1.read_namespaced_deployment(name=deploy_name, namespace=namespace)
+            original_replicas = deploy.spec.replicas or 1
+        except Exception:
+            original_replicas = 1
+            
         # Scale to 0
         apps_v1.patch_namespaced_deployment_scale(
             name=deploy_name, namespace=namespace,
             body={"spec": {"replicas": 0}}
         )
         time.sleep(5)
-        # Scale back to 2
+        
+        # Scale back to original count
         apps_v1.patch_namespaced_deployment_scale(
             name=deploy_name, namespace=namespace,
-            body={"spec": {"replicas": 2}}
+            body={"spec": {"replicas": original_replicas}}
         )
         return "SCALED"
 
