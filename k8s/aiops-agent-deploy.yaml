@@ -1,0 +1,56 @@
+# AIOps Self-Healing Agent Deployment
+# Deploys after image is in ECR
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: aiops-agent
+  namespace: prod
+  labels:
+    app: aiops-agent
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: aiops-agent
+  template:
+    metadata:
+      labels:
+        app: aiops-agent
+    spec:
+      serviceAccountName: aiops-agent
+      containers:
+        - name: agent
+          image: 304312474711.dkr.ecr.us-east-1.amazonaws.com/aiops-agent:latest
+          ports:
+            - containerPort: 8000
+          env:
+            - name: WATCH_NAMESPACE
+              value: "prod"
+            - name: BEDROCK_REGION
+              value: "us-east-1"
+            - name: BEDROCK_MODEL
+              value: "anthropic.claude-3-haiku-20240307"
+            - name: CHECK_INTERVAL_SECONDS
+              value: "30"
+            - name: AUTO_HEAL
+              value: "true"
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              cpu: 200m
+              memory: 256Mi
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 8000
+            initialDelaySeconds: 10
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 8000
+            initialDelaySeconds: 5
+            periodSeconds: 10

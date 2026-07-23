@@ -1,0 +1,114 @@
+# Sample Application — nginx with custom page
+# Purpose: Something for the AIOps agent to monitor and heal
+# Access: NodePort on port 30080 (access via Node IP:30080)
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pharma-web
+  namespace: prod
+  labels:
+    app: pharma-web
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: pharma-web
+  template:
+    metadata:
+      labels:
+        app: pharma-web
+    spec:
+      containers:
+        - name: nginx
+          image: nginx:1.25-alpine
+          ports:
+            - containerPort: 80
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 100m
+              memory: 128Mi
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 80
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 80
+            initialDelaySeconds: 3
+            periodSeconds: 5
+          volumeMounts:
+            - name: html
+              mountPath: /usr/share/nginx/html
+      volumes:
+        - name: html
+          configMap:
+            name: pharma-web-html
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: pharma-web-html
+  namespace: prod
+data:
+  index.html: |
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Zen Pharma - AIOps Demo</title>
+      <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+      <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; background: #1a1a2e; color: #eee; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+        .container { text-align: center; padding: 50px 40px; border: 2px solid #0f3460; border-radius: 16px; background: #16213e; max-width: 600px; width: 90%; }
+        .logo { font-size: 2.5em; font-weight: 700; color: #00d4ff; margin-bottom: 16px; }
+        .status { font-size: 1.5em; color: #4eff4e; margin: 20px 0; display: flex; align-items: center; justify-content: center; gap: 10px; }
+        .status-dot { width: 12px; height: 12px; background: #4eff4e; border-radius: 50%; display: inline-block; animation: pulse 2s infinite; }
+        @keyframes pulse { 0%,100% { box-shadow: 0 0 0 0 rgba(78,255,78,0.4); } 50% { box-shadow: 0 0 0 8px rgba(78,255,78,0); } }
+        .desc { color: #b0b0b0; font-size: 1em; margin-bottom: 24px; }
+        .pills { display: flex; justify-content: center; flex-wrap: wrap; gap: 10px; margin-bottom: 24px; }
+        .pill { background: #0f3460; padding: 8px 18px; border-radius: 20px; font-size: 0.85em; color: #8ecae6; border: 1px solid #1e4976; }
+        .footer { color: #666; font-size: 0.85em; margin-top: 20px; line-height: 1.6; }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="logo">Zen Pharma Platform</div>
+        <div class="status">
+          <span class="status-dot"></span>
+          Service Healthy
+        </div>
+        <p class="desc">AIOps Self-Healing Agent is watching this service</p>
+        <div class="pills">
+          <span class="pill">Namespace: prod</span>
+          <span class="pill">Pods: 2 replicas</span>
+          <span class="pill">Port: 80</span>
+        </div>
+        <p class="footer">If this page goes down, the AI agent will detect it and auto-heal within 90 seconds.</p>
+      </div>
+    </body>
+    </html>
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: pharma-web
+  namespace: prod
+  labels:
+    app: pharma-web
+spec:
+  type: NodePort
+  selector:
+    app: pharma-web
+  ports:
+    - port: 80
+      targetPort: 80
+      nodePort: 30080
