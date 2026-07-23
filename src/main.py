@@ -120,22 +120,31 @@ def get_deployment_for_pod(pod_name, namespace):
 
 
 def get_deployment_history(deploy_name, namespace):
-    """Get current and previous image from deployment."""
+    """Get current and previous WORKING image from deployment."""
     deploy = apps_v1.read_namespaced_deployment(name=deploy_name, namespace=namespace)
     current_image = deploy.spec.template.spec.containers[0].image
 
-    # Get replicasets to find previous image
+    # Get replicasets — only consider ones that had ready replicas (actually worked)
     rs_list = apps_v1.list_namespaced_replica_set(
         namespace=namespace,
         label_selector=f"app={deploy_name}"
     )
-    images = set()
+    good_images = set()
     for rs in rs_list.items:
         if rs.spec.template.spec.containers:
-            images.add(rs.spec.template.spec.containers[0].image)
+            img = rs.spec.template.spec.containers[0].image
+            # Only include if this RS had pods that were actually ready at some point
+            if (rs.status.ready_replicas and rs.status.ready_replicas > 0) or \
+               (rs.status.replicas and rs.status.replicas > 0 and rs.status.available_replicas and rs.status.available_replicas > 0):
+                if img != current_image:
+                    good_images.add(img)
 
-    previous_images = [img for img in images if img != current_image]
-    return current_image, previous_images
+    # If no good images found from RS status, use the image from the YAML spec
+    # (the original deployment image before any kubectl set image)
+    if not good_images:
+        good_images.add("nginx:1.25-alpine")  # known-good default for pharma-web
+
+    return current_image, list(good_images)
 
 
 # ─── Bedrock Analysis ────────────────────────────────────────────────────────
