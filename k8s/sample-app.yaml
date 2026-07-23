@@ -10,7 +10,7 @@ metadata:
   labels:
     app: pharma-web
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: pharma-web
@@ -89,7 +89,7 @@ data:
         <p class="desc">AIOps Self-Healing Agent is watching this service</p>
         <div class="pills">
           <span class="pill">Namespace: prod</span>
-          <span class="pill">Pods: 2 replicas</span>
+          <span class="pill">Pods: 1 replica</span>
           <span class="pill">Port: 80</span>
         </div>
         <p class="footer">If this page goes down, the AI agent will detect it and auto-heal within 90 seconds.</p>
