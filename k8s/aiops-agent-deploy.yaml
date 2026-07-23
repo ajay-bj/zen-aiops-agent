@@ -30,7 +30,7 @@ spec:
             - name: BEDROCK_REGION
               value: "us-east-1"
             - name: BEDROCK_MODEL
-              value: "anthropic.claude-haiku-4-5-v1:0"
+              value: "anthropic.claude-sonnet-5"
             - name: CHECK_INTERVAL_SECONDS
               value: "30"
             - name: AUTO_HEAL
