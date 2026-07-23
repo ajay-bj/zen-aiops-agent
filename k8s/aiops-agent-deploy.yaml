@@ -22,6 +22,7 @@ spec:
       containers:
         - name: agent
           image: 304312474711.dkr.ecr.us-east-1.amazonaws.com/aiops-agent:latest
+          imagePullPolicy: Always
           ports:
             - containerPort: 8000
           env:
@@ -30,7 +31,7 @@ spec:
             - name: BEDROCK_REGION
               value: "us-east-1"
             - name: BEDROCK_MODEL
-              value: "anthropic.claude-sonnet-5"
+              value: "anthropic.claude-sonnet-4-20250514-v1:0"
             - name: CHECK_INTERVAL_SECONDS
               value: "30"
             - name: AUTO_HEAL
